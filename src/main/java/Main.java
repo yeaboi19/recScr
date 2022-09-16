@@ -1,10 +1,26 @@
-import crawlers.Copykat;
+import crawlers.MyfoodbookURLGen;
 
 public class Main {
     public static void main(String[] args) {
-        Copykat crawler = new Copykat("https://copykat.com/grilled-buffalo-wings/");
-        Copykat crawler2= new Copykat("https://copykat.com/spicy-asian-chicken-wings/");
-        System.out.println(crawler.getAll());
-        System.out.println(crawler2.getAll());
+
+//        Myfoodbook crawler = new Myfoodbook("https://myfoodbook.com.au/recipes/show/eggplant-lime-and-tofu-laksa");
+//        System.out.println(crawler.getName());
+//        System.out.println(crawler.getIngredients());
+//        System.out.println(crawler.getMethod());
+// -----------------------------------------------------------scrapper demo
+        MyfoodbookURLGen crawler2 = new MyfoodbookURLGen();
+        crawler2.startThreads();
+
+//        Connection con = DataConnect.getConnection();
+// -----------------------------------------------------------sql demo
+
     }
+
 }
+/*
+    ///////////////////////////////////////////////////////////////////////////
+    //                                box                                    //
+    ///////////////////////////////////////////////////////////////////////////
+                           ^^^this box is very cool^^^
+*/
+
