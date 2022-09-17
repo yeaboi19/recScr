@@ -1,4 +1,4 @@
-package crawlers;
+package crawlers.Threaded;
 
 import model.Recipe;
 import org.jsoup.Connection;
@@ -46,6 +46,12 @@ public class MyfoodbookURLGen {
 //        MyfoodbookRecURLGen threads = new MyfoodbookRecURLGen("https://myfoodbook.com.au"+getCatLinks().get(0));
 //        threads.start();
     }
+    public void startWithNoThreads(){
+        for (String URL : getCatLinks()) {
+            MyfoodbookRecURLGen threads = new MyfoodbookRecURLGen("https://myfoodbook.com.au"+URL);
+            threads.startWithNoThreads();
+        }
+    }
 }
 //--------------------------------------------------------get recipes
 class MyfoodbookRecURLGen extends Thread{
@@ -57,6 +63,13 @@ class MyfoodbookRecURLGen extends Thread{
             this.doc = con.get();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public void startWithNoThreads(){
+        for (String URL : getLinks()) {
+            Myfoodbook thread = new Myfoodbook("https://myfoodbook.com.au"+URL);
+            thread.startWithNoThreads();
         }
     }
     @Override
@@ -101,6 +114,9 @@ class Myfoodbook extends Thread{
         System.out.println(getRecipe());
     }
 
+    public void startWithNoThreads() {
+        System.out.println(getRecipe());
+    }
     private String getRecipeName(){
         return doc.getElementsByClass("rs-title").first().text();
     }
@@ -120,7 +136,4 @@ class Myfoodbook extends Thread{
         return new Recipe(getRecipeName(),getIngredients(),getMethod());
     }
 
-    private void writeItDown(){
-
-    }
 }
