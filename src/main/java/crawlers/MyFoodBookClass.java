@@ -61,10 +61,12 @@ public class MyFoodBookClass {
         ArrayList<String> categoryList = getCategoryLinks();
         for (String URL : categoryList) {
             Document document = parseUrlToDocument("https://myfoodbook.com.au" + URL);
-            for (String url : getLinks(document)) {
-                Document threadDocument = parseUrlToDocument("https://myfoodbook.com.au" + url);
-                MyFoodBookThread thread = new MyFoodBookThread(threadDocument);
-                thread.start();
+            ArrayList<String> links = getLinks(document);
+            for (String url : links) {
+                new Thread(() -> {
+                    MyFoodBookThread thread = new MyFoodBookThread("https://myfoodbook.com.au" + url);
+                    System.out.println(thread.getRecipe());
+                }).start();
             }
         }
     }
@@ -72,17 +74,17 @@ public class MyFoodBookClass {
 
 
 // --------------------------------------------------------get recipe info
-class MyFoodBookThread extends Thread {
-    private final Document document;
+class MyFoodBookThread {
+    private Document document = null;
 
-    public MyFoodBookThread(Document document) {
-        this.document = document;
-    }
-
-    @Override
-    public void start() {
-        RecipeRecord recipe = getRecipe();
-        System.out.println(recipe);
+    public MyFoodBookThread(String url) {
+        try {
+            Connection con = Jsoup.connect(url);
+            con.maxBodySize(0);
+            this.document = con.get();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private String getRecipeName() {
@@ -102,7 +104,7 @@ class MyFoodBookThread extends Thread {
         return document.getElementsByClass("method").first().text();
     }
 
-    private RecipeRecord getRecipe() {
+    public RecipeRecord getRecipe() {
         return new RecipeRecord(getRecipeName(), getIngredients(), getInstructions());
     }
 
