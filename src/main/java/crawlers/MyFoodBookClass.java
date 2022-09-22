@@ -4,12 +4,14 @@ import model.RecipeRecord;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
+import org.jsoup.nodes.Attributes;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class MyFoodBookClass {
     private final Document document;
@@ -30,25 +32,23 @@ public class MyFoodBookClass {
         this.document = parseUrlToDocument("https://myfoodbook.com.au/categories");
     }
 
-    private ArrayList<String> getCategoryLinks() {
+    public ArrayList<String> getCategoryLinks() {
         ArrayList<String> categoryList = new ArrayList<>();
         for (Element element : document.getElementsByClass("view-content")) {
-            for (Element a : element.getElementsByTag("a")) {
-                for (Attribute attr : a.attributes()) {
-                    categoryList.add(attr.getValue());
-                }
+            Elements linkElements = element.getElementsByTag("a");
+            for (int i = 0; i < element.getElementsByTag("a").size(); i += 2) {
+                Attributes linkAttributes = linkElements.get(i).attributes();
+                categoryList.add(linkAttributes.get("href"));
             }
         }
         return categoryList;
     }
 
-    private ArrayList<String> getLinks(Document document) {
+    public ArrayList<String> getLinks(Document document) {
         ArrayList<String> linkList = new ArrayList<>();
         for (Element div : document.getElementsByClass("rc-title")) {
             for (Element a : div.getElementsByTag("a")) {
-                for (Attribute attr : a.attributes()) {
-                    linkList.add(attr.getValue());
-                }
+                linkList.add(a.attributes().get("href"));
             }
         }
         return linkList;
@@ -69,6 +69,7 @@ public class MyFoodBookClass {
                 }).start();
             }
         }
+
     }
 }
 
@@ -88,7 +89,7 @@ class MyFoodBookThread {
     }
 
     private String getRecipeName() {
-        return document.getElementsByClass("rs-title").first().text();
+        return Objects.requireNonNull(document.getElementsByClass("rs-title").first()).text();
     }
 
     private ArrayList<String> getIngredients() {
@@ -101,7 +102,7 @@ class MyFoodBookThread {
     }
 
     private String getInstructions() {
-        return document.getElementsByClass("method").first().text();
+        return Objects.requireNonNull(document.getElementsByClass("method").first()).text();
     }
 
     public RecipeRecord getRecipe() {
