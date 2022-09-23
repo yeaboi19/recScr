@@ -2,14 +2,16 @@ package crawlers;
 
 import model.RecipeRecord;
 import org.jsoup.Connection;
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Attributes;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -22,6 +24,16 @@ public class MyFoodBookClass {
             Connection con = Jsoup.connect(url);
             con.maxBodySize(0);
             document = con.get();
+
+        }catch (SocketTimeoutException e){ //catch exception and retry
+            System.out.println("Category: socket timeout");
+            document = parseUrlToDocument(url);
+        }catch (HttpStatusException e) {
+            System.out.println("Category: error 500");
+            document = parseUrlToDocument(url);
+        }catch (ConnectException e){
+            System.out.println("Category: connection timeout");
+            document = parseUrlToDocument(url);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -44,13 +56,22 @@ public class MyFoodBookClass {
         return categoryList;
     }
 
-    public ArrayList<String> getLinks(Document document) {
-        ArrayList<String> linkList = new ArrayList<>();
+    public ArrayList<String> getLinks(Document document, ArrayList<String> linkList) {
+
         for (Element div : document.getElementsByClass("rc-title")) {
             for (Element a : div.getElementsByTag("a")) {
                 linkList.add(a.attributes().get("href"));
             }
         }
+
+        if (!document.getElementsByClass("pager-next").isEmpty()) {
+            for (Element page : document.getElementsByClass("pager-next")) {
+                for (Element a : page.getElementsByTag("a")) {
+                    getLinks(parseUrlToDocument("https://myfoodbook.com.au" + a.attributes().get("href")), linkList);
+                }
+            }
+        }
+
         return linkList;
     }
 
@@ -60,14 +81,24 @@ public class MyFoodBookClass {
     public void startThreads() {
         ArrayList<String> categoryList = getCategoryLinks();
         for (String URL : categoryList) {
+
             Document document = parseUrlToDocument("https://myfoodbook.com.au" + URL);
-            ArrayList<String> links = getLinks(document);
-            for (String url : links) {
-                new Thread(() -> {
-                    MyFoodBookThread thread = new MyFoodBookThread("https://myfoodbook.com.au" + url);
-                    System.out.println(thread.getRecipe());
-                }).start();
-            }
+            new Thread(() -> {
+                ArrayList<String> links = getLinks(document, new ArrayList<>());
+
+                for (String url : links) {
+                    new Thread(() -> {
+                        Thread.currentThread().setName(url);
+                        MyFoodBookThread thread = new MyFoodBookThread("https://myfoodbook.com.au" + url);
+                        System.out.println(thread.getRecipe().name());//doodoofart :)
+
+                    }).start();
+                }
+
+                System.out.println("category finished :" + URL + "\nsize : " + links.size());
+            }).start();
+
+
         }
 
     }
@@ -75,14 +106,28 @@ public class MyFoodBookClass {
 
 
 // --------------------------------------------------------get recipe info
+
 class MyFoodBookThread {
     private Document document = null;
 
     public MyFoodBookThread(String url) {
+        connect(url);
+    }
+
+    private void connect(String url) {
         try {
             Connection con = Jsoup.connect(url);
             con.maxBodySize(0);
             this.document = con.get();
+        }catch (SocketTimeoutException e){
+            System.out.println("Thread "+Thread.currentThread().getName()+": socket timeout");
+            connect(url);
+        } catch (HttpStatusException e) {
+            System.out.println("Thread " + Thread.currentThread().getName() + ": server error 500");
+            connect(url);
+        }catch (ConnectException e){
+            System.out.println("Thread "+ Thread.currentThread().getName()+ ": connection timeout");
+            connect(url);
         } catch (IOException e) {
             e.printStackTrace();
         }
