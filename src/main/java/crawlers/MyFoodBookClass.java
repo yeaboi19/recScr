@@ -17,6 +17,7 @@ import java.util.Objects;
 
 public class MyFoodBookClass {
     private final Document document;
+    private int categoryCountdown;
 
     public Document parseUrlToDocument(String url) {
         Document document = null;
@@ -46,10 +47,12 @@ public class MyFoodBookClass {
 
     public ArrayList<String> getCategoryLinks() {
         ArrayList<String> categoryList = new ArrayList<>();
-        for (Element element : document.getElementsByClass("view-content")) {
+        for (int i = 0; i < document.getElementsByClass("view-content").size() - 1; i++) {
+            Element element = document.getElementsByClass("view-content").get(i);
             Elements linkElements = element.getElementsByTag("a");
-            for (int i = 0; i < element.getElementsByTag("a").size(); i += 2) {
-                Attributes linkAttributes = linkElements.get(i).attributes();
+
+            for (int j = 0; j < element.getElementsByTag("a").size(); j += 2) {
+                Attributes linkAttributes = linkElements.get(j).attributes();
                 categoryList.add(linkAttributes.get("href"));
             }
         }
@@ -80,6 +83,7 @@ public class MyFoodBookClass {
     //THIS IS THE AUTOMATION VOID ONLY. THIS WILL BE CALLED IN MAIN
     public void startThreads() {
         ArrayList<String> categoryList = getCategoryLinks();
+        categoryCountdown = categoryList.size();
         for (String URL : categoryList) {
 
             Document document = parseUrlToDocument("https://myfoodbook.com.au" + URL);
@@ -87,15 +91,13 @@ public class MyFoodBookClass {
                 ArrayList<String> links = getLinks(document, new ArrayList<>());
 
                 for (String url : links) {
-                    new Thread(() -> {
                         Thread.currentThread().setName(url);
                         MyFoodBookThread thread = new MyFoodBookThread("https://myfoodbook.com.au" + url);
-                        System.out.println(thread.getRecipe().name());//doodoofart :)
-
-                    }).start();
+                        System.out.println(URL.split("/")[2].toUpperCase()+"| "+thread.getRecipe().name());
                 }
-
-                System.out.println("category finished :" + URL + "\nsize : " + links.size());
+                categoryCountdown--;
+                System.out.println("\ncategory finished :" + URL + "\nsize : " + links.size()+"\n" +
+                        "categories left: "+categoryCountdown+"\n");
             }).start();
 
 
